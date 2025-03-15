@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gemma Chat</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.3s;
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+    body.light {
+      background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+    }
+    body.dark {
+      background: linear-gradient(135deg, #2b2b2b 0%, #1a1a1a 100%);
+    }
+    .chat-container {
+      width: 70vw;
+      max-width: 900px;
+      height: 80vh;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2vw;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: background 0.3s, color 0.3s;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .chat-container.dark {
+      background: rgba(40, 40, 40, 0.9);
+      color: #e0e0e0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .header {
+      padding-bottom: 1vw;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1vw;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 2vw, 2rem);
+    }
+    .header.light h1 { color: #1a1a1a; }
+    .header.dark h1 { color: #e0e0e0; }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1vw;
+      scroll-behavior: smooth;
+    }
+    .message {
+      margin: 1vw 0;
+      padding: 1vw;
+      border-radius: 15px;
+      max-width: 80%;
+      animation: slideIn 0.2s ease-out;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .user-message {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      margin-left: auto;
+    }
+    .ai-message.light {
+      background: #f4f7fa;
+      color: #333;
+      border: 1px solid #e0e4e8;
+    }
+    .ai-message.dark {
+      background: #3a3a3a;
+      color: #e0e0e0;
+      border: 1px solid #505050;
+    }
+    .thinking {
+      display: flex;
+      gap: 0.5vw;
+      padding: 1vw;
+    }
+    .thinking.light { color: #666; }
+    .thinking.dark { color: #bbb; }
+    .dot {
+      width: 0.5vw;
+      height: 0.5vw;
+      background: #007bff;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    .input-container {
+      display: flex;
+      gap: 0.5vw;
+      padding: 1vw 0;
+      border-top: 1px solid #e0e4e8;
+      align-items: center;
+    }
+    .input-container.light { background: rgba(255, 255, 255, 0.95); }
+    .input-container.dark { background: rgba(40, 40, 40, 0.95); border-top: 1px solid #505050; }
+    input, #apiKey {
+      flex: 1;
+      padding: 1vw;
+      border: 1px solid #d0d7de;
+      border-radius: 10px;
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      background: #fff;
+      transition: border-color 0.2s;
+      direction: ltr;
+    }
+    .dark input, .dark #apiKey {
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #505050;
+    }
+    input:focus, #apiKey:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    }
+    button {
+      padding: 1vw 1.5vw;
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: transform 0.2s, background 0.2s;
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      min-width: 8vw;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #0056b3, #003d82);
+    }
+    #newChat {
+      background: linear-gradient(135deg, #ff4444, #cc0000);
+    }
+    #newChat:hover {
+      background: linear-gradient(135deg, #cc0000, #990000);
+    }
+    .api-container {
+      margin-bottom: 1vw;
+      display: flex;
+      align-items: center;
+      gap: 0.5vw;
+      flex-wrap: wrap;
+    }
+    #apiHelp {
+      background: linear-gradient(135deg, #28a745, #218838);
+    }
+    #apiHelp:hover {
+      background: linear-gradient(135deg, #218838, #1c6d31);
+    }
+    .file-btn {
+      padding: 1vw 1.5vw;
+      background: linear-gradient(135deg, #6c757d, #495057);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      min-width: 8vw;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .file-btn:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #495057, #343a40);
+    }
+    #fileInput { display: none; }
+    pre {
+      background: #f0f0f0;
+      padding: 1vw;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+      border: 1px solid #e0e0e0;
+      font-size: clamp(0.9rem, 1.2vw, 1rem);
+    }
+    .dark pre {
+      background: #2d2d2d;
+      border: 1px solid #505050;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.5vw;
+      right: 0.5vw;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 0.3vw 0.6vw;
+      cursor: pointer;
+      font-size: clamp(0.8rem, 1vw, 0.9rem);
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .copy-btn:hover { opacity: 1; }
+    .toggle-container {
+      display: flex;
+      gap: 0.5vw;
+      flex-wrap: wrap;
+    }
+    .toggle-btn {
+      padding: 1vw 1.5vw;
+      background: linear-gradient(135deg, #6c757d, #495057);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      min-width: 8vw;
+    }
+    .toggle-btn:hover {
+      background: linear-gradient(135deg, #495057, #343a40);
+    }
+    .rtl { direction: rtl; }
+    .rtl .messages { direction: rtl; }
+    .rtl .message { margin-left: 0; margin-right: auto; }
+    .rtl .user-message { margin-right: auto; margin-left: 0; }
+    .rtl .copy-btn { right: auto; left: 0.5vw; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="${localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'}">
+  <div class="chat-container">
+    <div class="header">
+      <h1 data-en="Gemma Chat" data-fa="چت جما">Gemma Chat</h1>
+      <div class="toggle-container">
+        <button id="themeToggle" data-en="Dark" data-fa="تاریک">${localStorage.getItem('theme') === 'dark' ? (localStorage.getItem('language') === 'fa' ? 'روشن' : 'Light') : (localStorage.getItem('language') === 'fa' ? 'تاریک' : 'Dark')}</button>
+        <button id="langToggle" data-en="Persian" data-fa="انگلیسی">${localStorage.getItem('language') === 'fa' ? 'انگلیسی' : 'Persian'}</button>
+        <button id="newChat" data-en="New Chat" data-fa="چت جدید">New Chat</button>
+      </div>
+    </div>
+    <div class="api-container">
+      <input type="text" id="apiKey" placeholder="Enter your OpenRouter API Key" data-en-placeholder="Enter your OpenRouter API Key" data-fa-placeholder="کلید API OpenRouter خود را وارد کنید" value="${localStorage.getItem('apiKey') || ''}">
+      <button id="apiHelp" data-en="Get API Key" data-fa="دریافت کلید API">Get API Key</button>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="input-container">
+      <input type="text" id="input" placeholder="Type a message..." data-en-placeholder="Type a message..." data-fa-placeholder="پیامی تایپ کنید...">
+      <button class="file-btn" id="fileBtn">↑</button>
+      <button id="send">➤</button>
+      <input type="file" id="fileInput" accept="image/*,application/pdf,text/plain">
+    </div>
+  </div>
+
+  <script>
+    function init() {
+      // Client-side User-Agent detection (moved from Worker)
+      const userAgent = navigator.userAgent || "";
+      const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+      console.log("Is Mobile:", isMobile); // For debugging; adjust UI here if needed
+
+      let conversation = JSON.parse(localStorage.getItem('conversation')) || [];
+      let apiKey = localStorage.getItem('apiKey') || '';
+      let isTyping = false;
+      let isDark = localStorage.getItem('theme') === 'dark';
+      let isPersian = localStorage.getItem('language') === 'fa';
+
+      function updateLanguage() {
+        document.querySelectorAll('[data-en]').forEach(el => {
+          el.textContent = isPersian ? el.getAttribute('data-fa') : el.getAttribute('data-en');
+        });
+        document.querySelectorAll('[data-en-placeholder]').forEach(el => {
+          el.placeholder = isPersian ? el.getAttribute('data-fa-placeholder') : el.getAttribute('data-en-placeholder');
+        });
+        document.body.classList.toggle('rtl', isPersian);
+        document.getElementById('langToggle').textContent = isPersian ? 'انگلیسی' : 'Persian';
+      }
+
+      function updateTheme() {
+        document.body.classList.toggle('dark', isDark);
+        document.body.classList.toggle('light', !isDark);
+        document.querySelectorAll('.chat-container, .header, .ai-message, .input-container, .thinking').forEach(el => {
+          el.classList.toggle('dark', isDark);
+          el.classList.toggle('light', !isDark);
+        });
+        document.getElementById('themeToggle').textContent = isDark ? (isPersian ? 'روشن' : 'Light') : (isPersian ? 'تاریک' : 'Dark');
+      }
+
+      function loadConversation() {
+        const messages = document.getElementById('messages');
+        messages.innerHTML = '';
+        conversation.forEach(msg => {
+          const isUser = msg.role === 'user';
+          const content = msg.content[0].type === 'text' ? msg.content[0].text : '[File sent]';
+          addMessage(content, isUser, false);
+        });
+        document.getElementById('apiKey').value = apiKey;
+        updateLanguage();
+        updateTheme();
+      }
+
+      function addThinkingIndicator() {
+        const messages = document.getElementById('messages');
+        const thinking = document.createElement('div');
+        thinking.className = 'thinking ai-message';
+        thinking.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+        messages.appendChild(thinking);
+        messages.scrollTop = messages.scrollHeight;
+        return thinking;
+      }
+
+      function removeThinkingIndicator(thinking) {
+        if (thinking && thinking.parentNode) {
+          thinking.parentNode.removeChild(thinking);
+        }
+      }
+
+      async function typeMessage(element, content) {
+        element.innerHTML = '';
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(marked.parse(content), 'text/html');
+        const textNodes = [];
+        function extractText(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            textNodes.push(node.textContent);
+          } else if (node.nodeName === 'PRE') {
+            textNodes.push(node.textContent);
+          } else {
+            node.childNodes.forEach(extractText);
+          }
+        }
+        extractText(doc.body);
+        let fullText = textNodes.join(' ');
+        for (let i = 0; i < fullText.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 20));
+          element.innerHTML = marked.parse(content.slice(0, fullText.slice(0, i + 1).length));
+          addCopyButtons(element);
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+        element.innerHTML = marked.parse(content);
+        addCopyButtons(element);
+      }
+
+      function addCopyButtons(element) {
+        const preBlocks = element.querySelectorAll('pre');
+        preBlocks.forEach(pre => {
+          if (!pre.querySelector('.copy-btn')) {
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.textContent = isPersian ? 'کپی' : 'Copy';
+            copyBtn.onclick = () => {
+              navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+                copyBtn.textContent = isPersian ? 'کپی شد!' : 'Copied!';
+                setTimeout(() => copyBtn.textContent = isPersian ? 'کپی' : 'Copy', 1000);
+              });
+            };
+            pre.appendChild(copyBtn);
+          }
+        });
+      }
+
+      async function addMessage(content, isUser = false, animate = true) {
+        const messages = document.getElementById('messages');
+        const message = document.createElement('div');
+        message.className = `message ${isUser ? 'user-message' : 'ai-message'} ${isDark ? 'dark' : 'light'}`;
+        if (isUser) {
+          message.textContent = content;
+          messages.appendChild(message);
+        } else if (animate) {
+          messages.appendChild(message);
+          await typeMessage(message, content);
+        } else {
+          message.innerHTML = marked.parse(content);
+          addCopyButtons(message);
+          messages.appendChild(message);
+        }
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function saveConversationLocally() {
+        localStorage.setItem('conversation', JSON.stringify(conversation));
+        localStorage.setItem('apiKey', apiKey);
+      }
+
+      function getBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+      }
+
+      async function sendMessage(file = null) {
+        if (isTyping) return;
+        isTyping = true;
+
+        const input = document.getElementById('input');
+        const message = input.value.trim();
+        apiKey = document.getElementById('apiKey').value.trim();
+
+        if (!apiKey) {
+          addMessage(isPersian ? "لطفاً ابتدا کلید API را وارد کنید" : "Please enter an API key first");
+          isTyping = false;
+          return;
+        }
+        if (!message && !file) {
+          isTyping = false;
+          return;
+        }
+
+        let content = [];
+        if (message) {
+          content.push({ type: "text", text: message });
+          addMessage(message, true);
+        }
+        if (file) {
+          try {
+            const base64Data = await getBase64(file);
+            const fileType = file.type;
+            if (fileType.startsWith('image/')) {
+              content.push({
+                type: "image_url",
+                image_url: { url: base64Data }
+              });
+              addMessage(isPersian ? "[تصویر ارسال شد]" : "[Image sent]", true);
+            } else if (fileType === 'application/pdf' || fileType === 'text/plain') {
+              content.push({
+                type: "text",
+                text: "[File content: " + base64Data + "]"
+              });
+              addMessage(isPersian ? "[فایل ارسال شد: " + file.name + "]" : "[File sent: " + file.name + "]", true);
+            } else {
+              addMessage(isPersian ? "نوع فایل پشتیبانی نمی‌شود: " + fileType : "Unsupported file type: " + fileType);
+              isTyping = false;
+              return;
+            }
+          } catch (error) {
+            addMessage(isPersian ? "خطا در پردازش فایل: " + error.message : "Error processing file: " + error.message);
+            isTyping = false;
+            return;
+          }
+        }
+
+        input.value = '';
+        document.getElementById('fileInput').value = '';
+
+        const newMessage = {
+          role: "user",
+          content: content
+        };
+        conversation.push(newMessage);
+        saveConversationLocally();
+
+        const thinking = addThinkingIndicator();
+
+        try {
+          const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "HTTP-Referer": window.location.href, // Updated for static site
+              "X-Title": "Gemma Chat",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemma-3-27b-it:free",
+              messages: conversation,
+            }),
+          });
+
+          removeThinkingIndicator(thinking);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
+          }
+
+          const data = await response.json();
+
+          if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+            throw new Error("Invalid API response format: " + JSON.stringify(data));
+          }
+
+          const aiResponse = {
+            role: "assistant",
+            content: [{ type: "text", text: data.choices[0].message.content }]
+          };
+          conversation.push(aiResponse);
+          await addMessage(data.choices[0].message.content);
+          saveConversationLocally();
+        } catch (error) {
+          removeThinkingIndicator(thinking);
+          addMessage(isPersian ? "خطا: " + error.message : "Error: " + error.message);
+        } finally {
+          isTyping = false;
+        }
+      }
+
+      document.getElementById('send').addEventListener('click', () => sendMessage());
+      document.getElementById('input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+
+      const fileBtn = document.getElementById('fileBtn');
+      const fileInput = document.getElementById('fileInput');
+      fileBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) sendMessage(file);
+      });
+
+      document.getElementById('newChat').addEventListener('click', () => {
+        conversation = [];
+        localStorage.removeItem('conversation');
+        document.getElementById('messages').innerHTML = '';
+        saveConversationLocally();
+      });
+
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        isDark = !isDark;
+        updateTheme();
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      });
+
+      document.getElementById('langToggle').addEventListener('click', () => {
+        isPersian = !isPersian;
+        updateLanguage();
+        localStorage.setItem('language', isPersian ? 'fa' : 'en');
+      });
+
+      document.getElementById('apiHelp').addEventListener('click', () => {
+        window.open('https://openrouter.ai/settings/keys', '_blank');
+      });
+
+      window.addEventListener('load', loadConversation);
+    }
+
+    if (document.readyState !== 'loading') {
+      init();
+    } else {
+      document.addEventListener('DOMContentLoaded', init);
+    }
+  </script>
+</body>
+</html>
