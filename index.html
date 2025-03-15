@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Updated viewport to disable zooming -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Allow scaling but control it via CSS/JS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nova Chat</title>
-  <!-- Include marked.js for Markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * {
@@ -22,16 +21,21 @@
       background: #e9ecef;
       transition: background 0.3s ease;
       padding: 10px;
-      /* Fix the body size and prevent scrolling */
       overflow: hidden;
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
+      /* Disable pinch-zoom by default */
+      touch-action: none;
     }
     body.dark {
       background: #212529;
+    }
+    /* Enable pinch-zoom when input is focused */
+    body.input-focused {
+      touch-action: auto;
     }
     .chat-wrapper {
       width: 100%;
@@ -100,7 +104,6 @@
       color: #f8f9fa;
       border: 1px solid #6c757d;
     }
-    /* Style for Markdown content */
     .ai-msg p { margin: 0 0 8px; }
     .ai-msg ul, .ai-msg ol { margin: 0 0 8px 20px; }
     .ai-msg li { margin: 4px 0; }
@@ -214,7 +217,6 @@
     .rtl .message { margin-left: 0; margin-right: auto; }
     .rtl .user-msg { margin-right: auto; margin-left: 0; }
 
-    /* Media Queries for Mobile */
     @media (max-width: 768px) {
       .chat-wrapper {
         height: 95vh;
@@ -299,6 +301,8 @@
       let isPersian = localStorage.getItem('lang') === 'fa';
 
       const chatBody = document.getElementById('chat-body');
+      const chatInput = document.getElementById('chat-input');
+      const apiKeyInput = document.getElementById('api-key-input');
 
       function updateUI() {
         document.body.classList.toggle('dark', isDark);
@@ -328,9 +332,9 @@
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${isUser ? 'user-msg' : 'ai-msg'}`;
         if (isUser) {
-          msgDiv.textContent = content; // User messages remain plain text
+          msgDiv.textContent = content;
         } else {
-          msgDiv.innerHTML = marked.parse(content); // Render AI responses as Markdown
+          msgDiv.innerHTML = marked.parse(content);
         }
         chatBody.appendChild(msgDiv);
         if (animate) msgDiv.scrollIntoView({ behavior: 'smooth' });
@@ -446,7 +450,7 @@
           const aiContent = data.choices[0].message.content;
           const aiMsg = { role: 'assistant', content: [{ type: 'text', text: aiContent }] };
           conversation.push(aiMsg);
-          addMessage(aiContent); // Render AI response with Markdown
+          addMessage(aiContent);
           saveState();
         } catch (error) {
           removeThinking(thinking);
@@ -455,6 +459,20 @@
           isTyping = false;
         }
       }
+
+      // Enable zooming when input fields are focused
+      function handleInputFocus() {
+        document.body.classList.add('input-focused');
+      }
+
+      function handleInputBlur() {
+        document.body.classList.remove('input-focused');
+      }
+
+      chatInput.addEventListener('focus', handleInputFocus);
+      chatInput.addEventListener('blur', handleInputBlur);
+      apiKeyInput.addEventListener('focus', handleInputFocus);
+      apiKeyInput.addEventListener('blur', handleInputBlur);
 
       document.getElementById('send-btn').addEventListener('click', () => sendMessage());
       document.getElementById('chat-input').addEventListener('keypress', (e) => {
