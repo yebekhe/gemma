@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova Chat Mobile</title>
+  <!-- Updated viewport to disable zooming -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Nova Chat</title>
+  <!-- Include marked.js for Markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * {
@@ -19,27 +21,25 @@
       align-items: center;
       background: #e9ecef;
       transition: background 0.3s ease;
-      padding: 5px;
+      padding: 10px;
+      /* Fix the body size and prevent scrolling */
       overflow: hidden;
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      touch-action: none; /* Disable pinch-zoom by default */
     }
     body.dark {
       background: #212529;
     }
-    body.input-focused {
-      touch-action: auto; /* Enable zoom when input is focused */
-    }
     .chat-wrapper {
       width: 100%;
-      height: 100%; /* Full height for mobile */
+      max-width: 800px;
+      height: 90vh;
       background: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -50,36 +50,37 @@
       color: #f8f9fa;
     }
     .chat-header {
-      padding: 10px;
+      padding: 10px 15px;
       border-bottom: 1px solid #dee2e6;
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
       gap: 5px;
     }
     .dark .chat-header {
       border-bottom: 1px solid #495057;
     }
     .chat-header h1 {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       font-weight: 600;
-      text-align: center;
     }
     .controls {
       display: flex;
-      justify-content: space-around;
       gap: 5px;
+      flex-wrap: wrap;
     }
     .chat-body {
       flex: 1;
-      padding: 10px;
+      padding: 15px;
       overflow-y: auto;
       scroll-behavior: smooth;
     }
     .message {
-      margin: 6px 0;
+      margin: 8px 0;
       padding: 8px 12px;
-      border-radius: 6px;
-      max-width: 85%;
+      border-radius: 8px;
+      max-width: 80%;
       line-height: 1.4;
       animation: fadeIn 0.3s ease;
       font-size: 0.9rem;
@@ -99,15 +100,16 @@
       color: #f8f9fa;
       border: 1px solid #6c757d;
     }
-    .ai-msg p { margin: 0 0 6px; }
-    .ai-msg ul, .ai-msg ol { margin: 0 0 6px 15px; }
-    .ai-msg li { margin: 3px 0; }
+    /* Style for Markdown content */
+    .ai-msg p { margin: 0 0 8px; }
+    .ai-msg ul, .ai-msg ol { margin: 0 0 8px 20px; }
+    .ai-msg li { margin: 4px 0; }
     .ai-msg strong { font-weight: 700; }
     .ai-msg em { font-style: italic; }
     .ai-msg code {
       background: #e9ecef;
       padding: 2px 4px;
-      border-radius: 3px;
+      border-radius: 4px;
       font-family: monospace;
     }
     .dark .ai-msg code {
@@ -115,12 +117,12 @@
     }
     .thinking {
       display: flex;
-      gap: 4px;
-      padding: 6px;
+      gap: 5px;
+      padding: 8px;
     }
     .dot {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
       background: #0d6efd;
       border-radius: 50%;
       animation: bounce 1.2s infinite;
@@ -128,34 +130,37 @@
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
     .chat-footer {
-      padding: 10px;
+      padding: 10px 15px;
       border-top: 1px solid #dee2e6;
       background: #ffffff;
       display: flex;
-      flex-direction: column;
       gap: 5px;
+      align-items: center;
+      flex-wrap: wrap;
     }
     .dark .chat-footer {
       border-top: 1px solid #495057;
       background: #343a40;
     }
     .api-section {
-      padding: 10px;
+      padding: 10px 15px;
       border-bottom: 1px solid #dee2e6;
       display: flex;
-      flex-direction: column;
       gap: 5px;
+      align-items: center;
+      flex-wrap: wrap;
     }
     .dark .api-section {
       border-bottom: 1px solid #495057;
     }
     input[type="text"], #api-key-input {
-      width: 100%;
+      flex: 1;
       padding: 8px;
       border: 1px solid #ced4da;
-      border-radius: 5px;
+      border-radius: 6px;
       font-size: 0.9rem;
       transition: border-color 0.2s ease;
+      min-width: 0;
     }
     .dark input[type="text"], .dark #api-key-input {
       background: #495057;
@@ -165,18 +170,18 @@
     input:focus, #api-key-input:focus {
       outline: none;
       border-color: #0d6efd;
-      box-shadow: 0 0 3px rgba(13, 110, 253, 0.3);
+      box-shadow: 0 0 4px rgba(13, 110, 253, 0.3);
     }
     button {
       padding: 8px 12px;
       background: #0d6efd;
       color: #fff;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 0.9rem;
       transition: background 0.2s ease, transform 0.2s ease;
-      min-width: 50px;
+      min-width: 60px;
     }
     button:hover {
       background: #0a58ca;
@@ -205,31 +210,34 @@
     #file-input {
       display: none;
     }
-    .input-row {
-      display: flex;
-      gap: 5px;
-      width: 100%;
-    }
     .rtl { direction: rtl; }
     .rtl .message { margin-left: 0; margin-right: auto; }
     .rtl .user-msg { margin-right: auto; margin-left: 0; }
 
-    @media (max-width: 480px) {
+    /* Media Queries for Mobile */
+    @media (max-width: 768px) {
       .chat-wrapper {
-        border-radius: 6px;
+        height: 95vh;
+        border-radius: 8px;
       }
-      .chat-header, .chat-footer, .api-section {
-        padding: 8px;
+      .chat-header {
+        padding: 8px 10px;
       }
       .chat-header h1 {
         font-size: 1rem;
       }
       .chat-body {
-        padding: 8px;
+        padding: 10px;
       }
       .message {
         font-size: 0.85rem;
         padding: 6px 10px;
+        max-width: 85%;
+      }
+      .chat-footer, .api-section {
+        padding: 8px 10px;
+        flex-direction: column;
+        align-items: stretch;
       }
       input[type="text"], #api-key-input {
         font-size: 0.85rem;
@@ -238,11 +246,14 @@
       button {
         font-size: 0.85rem;
         padding: 6px 10px;
-        min-width: 45px;
+        min-width: 50px;
       }
       #file-btn {
         padding: 6px;
         min-width: 35px;
+      }
+      .controls {
+        gap: 3px;
       }
     }
 
@@ -263,7 +274,7 @@
       <div class="controls">
         <button id="theme-btn" data-en="Dark" data-fa="تاریک">${localStorage.getItem('theme') === 'dark' ? (localStorage.getItem('lang') === 'fa' ? 'روشن' : 'Light') : (localStorage.getItem('lang') === 'fa' ? 'تاریک' : 'Dark')}</button>
         <button id="lang-btn" data-en="Persian" data-fa="انگلیسی">${localStorage.getItem('lang') === 'fa' ? 'انگلیسی' : 'Persian'}</button>
-        <button id="clear-btn" data-en="Clear" data-fa="پاک کردن">Clear</button>
+        <button id="clear-btn" data-en="Clear Chat" data-fa="پاک کردن چت">Clear Chat</button>
       </div>
     </div>
     <div class="api-section">
@@ -273,10 +284,8 @@
     <div class="chat-body" id="chat-body"></div>
     <div class="chat-footer">
       <input type="text" id="chat-input" placeholder="Type your message..." data-en-placeholder="Type your message..." data-fa-placeholder="پیام خود را تایپ کنید...">
-      <div class="input-row">
-        <button id="file-btn">📎</button>
-        <button id="send-btn">Send</button>
-      </div>
+      <button id="file-btn">📎</button>
+      <button id="send-btn">Send</button>
       <input type="file" id="file-input" accept="image/*,application/pdf,text/plain">
     </div>
   </div>
@@ -290,8 +299,6 @@
       let isPersian = localStorage.getItem('lang') === 'fa';
 
       const chatBody = document.getElementById('chat-body');
-      const chatInput = document.getElementById('chat-input');
-      const apiKeyInput = document.getElementById('api-key-input');
 
       function updateUI() {
         document.body.classList.toggle('dark', isDark);
@@ -321,9 +328,9 @@
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${isUser ? 'user-msg' : 'ai-msg'}`;
         if (isUser) {
-          msgDiv.textContent = content;
+          msgDiv.textContent = content; // User messages remain plain text
         } else {
-          msgDiv.innerHTML = marked.parse(content);
+          msgDiv.innerHTML = marked.parse(content); // Render AI responses as Markdown
         }
         chatBody.appendChild(msgDiv);
         if (animate) msgDiv.scrollIntoView({ behavior: 'smooth' });
@@ -419,7 +426,7 @@
             headers: {
               'Authorization': `Bearer ${apiKey}`,
               'HTTP-Referer': window.location.href,
-              'X-Title': 'Nova Chat Mobile',
+              'X-Title': 'Nova Chat',
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -439,7 +446,7 @@
           const aiContent = data.choices[0].message.content;
           const aiMsg = { role: 'assistant', content: [{ type: 'text', text: aiContent }] };
           conversation.push(aiMsg);
-          addMessage(aiContent);
+          addMessage(aiContent); // Render AI response with Markdown
           saveState();
         } catch (error) {
           removeThinking(thinking);
@@ -448,19 +455,6 @@
           isTyping = false;
         }
       }
-
-      function handleInputFocus() {
-        document.body.classList.add('input-focused');
-      }
-
-      function handleInputBlur() {
-        document.body.classList.remove('input-focused');
-      }
-
-      chatInput.addEventListener('focus', handleInputFocus);
-      chatInput.addEventListener('blur', handleInputBlur);
-      apiKeyInput.addEventListener('focus', handleInputFocus);
-      apiKeyInput.addEventListener('blur', handleInputBlur);
 
       document.getElementById('send-btn').addEventListener('click', () => sendMessage());
       document.getElementById('chat-input').addEventListener('keypress', (e) => {
