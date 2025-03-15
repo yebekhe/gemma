@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Updated viewport to disable zooming -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nova Chat</title>
+  <!-- Include marked.js for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -18,7 +21,14 @@
       align-items: center;
       background: #e9ecef;
       transition: background 0.3s ease;
-      padding: 10px; /* Added padding for edge-to-edge screens */
+      padding: 10px;
+      /* Fix the body size and prevent scrolling */
+      overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
     body.dark {
       background: #212529;
@@ -26,7 +36,7 @@
     .chat-wrapper {
       width: 100%;
       max-width: 800px;
-      height: 90vh; /* Reduced from 85vh to fit more comfortably */
+      height: 90vh;
       background: #ffffff;
       border-radius: 10px;
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
@@ -40,40 +50,40 @@
       color: #f8f9fa;
     }
     .chat-header {
-      padding: 10px 15px; /* Reduced padding */
+      padding: 10px 15px;
       border-bottom: 1px solid #dee2e6;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap; /* Allow wrapping on small screens */
+      flex-wrap: wrap;
       gap: 5px;
     }
     .dark .chat-header {
       border-bottom: 1px solid #495057;
     }
     .chat-header h1 {
-      font-size: 1.2rem; /* Reduced font size */
+      font-size: 1.2rem;
       font-weight: 600;
     }
     .controls {
       display: flex;
-      gap: 5px; /* Reduced gap */
+      gap: 5px;
       flex-wrap: wrap;
     }
     .chat-body {
       flex: 1;
-      padding: 15px; /* Reduced padding */
+      padding: 15px;
       overflow-y: auto;
       scroll-behavior: smooth;
     }
     .message {
-      margin: 8px 0; /* Reduced margin */
-      padding: 8px 12px; /* Reduced padding */
+      margin: 8px 0;
+      padding: 8px 12px;
       border-radius: 8px;
-      max-width: 80%; /* Slightly increased to fit content better */
+      max-width: 80%;
       line-height: 1.4;
       animation: fadeIn 0.3s ease;
-      font-size: 0.9rem; /* Reduced font size */
+      font-size: 0.9rem;
     }
     .user-msg {
       background: #0d6efd;
@@ -90,13 +100,28 @@
       color: #f8f9fa;
       border: 1px solid #6c757d;
     }
+    /* Style for Markdown content */
+    .ai-msg p { margin: 0 0 8px; }
+    .ai-msg ul, .ai-msg ol { margin: 0 0 8px 20px; }
+    .ai-msg li { margin: 4px 0; }
+    .ai-msg strong { font-weight: 700; }
+    .ai-msg em { font-style: italic; }
+    .ai-msg code {
+      background: #e9ecef;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .dark .ai-msg code {
+      background: #6c757d;
+    }
     .thinking {
       display: flex;
-      gap: 5px; /* Reduced gap */
-      padding: 8px; /* Reduced padding */
+      gap: 5px;
+      padding: 8px;
     }
     .dot {
-      width: 6px; /* Reduced size */
+      width: 6px;
       height: 6px;
       background: #0d6efd;
       border-radius: 50%;
@@ -105,23 +130,23 @@
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
     .chat-footer {
-      padding: 10px 15px; /* Reduced padding */
+      padding: 10px 15px;
       border-top: 1px solid #dee2e6;
       background: #ffffff;
       display: flex;
-      gap: 5px; /* Reduced gap */
+      gap: 5px;
       align-items: center;
-      flex-wrap: wrap; /* Allow wrapping */
+      flex-wrap: wrap;
     }
     .dark .chat-footer {
       border-top: 1px solid #495057;
       background: #343a40;
     }
     .api-section {
-      padding: 10px 15px; /* Reduced padding */
+      padding: 10px 15px;
       border-bottom: 1px solid #dee2e6;
       display: flex;
-      gap: 5px; /* Reduced gap */
+      gap: 5px;
       align-items: center;
       flex-wrap: wrap;
     }
@@ -130,12 +155,12 @@
     }
     input[type="text"], #api-key-input {
       flex: 1;
-      padding: 8px; /* Reduced padding */
+      padding: 8px;
       border: 1px solid #ced4da;
       border-radius: 6px;
-      font-size: 0.9rem; /* Reduced font size */
+      font-size: 0.9rem;
       transition: border-color 0.2s ease;
-      min-width: 0; /* Prevent overflow on small screens */
+      min-width: 0;
     }
     .dark input[type="text"], .dark #api-key-input {
       background: #495057;
@@ -148,15 +173,15 @@
       box-shadow: 0 0 4px rgba(13, 110, 253, 0.3);
     }
     button {
-      padding: 8px 12px; /* Reduced padding */
+      padding: 8px 12px;
       background: #0d6efd;
       color: #fff;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem; /* Reduced font size */
+      font-size: 0.9rem;
       transition: background 0.2s ease, transform 0.2s ease;
-      min-width: 60px; /* Ensure buttons don’t shrink too much */
+      min-width: 60px;
     }
     button:hover {
       background: #0a58ca;
@@ -176,7 +201,7 @@
     }
     #file-btn {
       background: #6c757d;
-      padding: 8px; /* Even smaller for icon button */
+      padding: 8px;
       min-width: 40px;
     }
     #file-btn:hover {
@@ -192,7 +217,7 @@
     /* Media Queries for Mobile */
     @media (max-width: 768px) {
       .chat-wrapper {
-        height: 95vh; /* Use more vertical space on mobile */
+        height: 95vh;
         border-radius: 8px;
       }
       .chat-header {
@@ -211,7 +236,7 @@
       }
       .chat-footer, .api-section {
         padding: 8px 10px;
-        flex-direction: column; /* Stack elements vertically on small screens */
+        flex-direction: column;
         align-items: stretch;
       }
       input[type="text"], #api-key-input {
@@ -302,7 +327,11 @@
       function addMessage(content, isUser = false, animate = true) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${isUser ? 'user-msg' : 'ai-msg'}`;
-        msgDiv.textContent = content;
+        if (isUser) {
+          msgDiv.textContent = content; // User messages remain plain text
+        } else {
+          msgDiv.innerHTML = marked.parse(content); // Render AI responses as Markdown
+        }
         chatBody.appendChild(msgDiv);
         if (animate) msgDiv.scrollIntoView({ behavior: 'smooth' });
         chatBody.scrollTop = chatBody.scrollHeight;
@@ -417,7 +446,7 @@
           const aiContent = data.choices[0].message.content;
           const aiMsg = { role: 'assistant', content: [{ type: 'text', text: aiContent }] };
           conversation.push(aiMsg);
-          addMessage(aiContent);
+          addMessage(aiContent); // Render AI response with Markdown
           saveState();
         } catch (error) {
           removeThinking(thinking);
